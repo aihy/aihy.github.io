@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>快速搜索文件 | W开发笔记</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="快速搜索文件" />
+<meta name="author" content="牛哥" />
+<meta property="og:locale" content="zh_CN" />
+<meta name="description" content="macOS上的搜索功能不太好用，搜的太慢。" />
+<meta property="og:description" content="macOS上的搜索功能不太好用，搜的太慢。" />
+<link rel="canonical" href="http://hhwyz.com/2022/04/27/%E5%BF%AB%E9%80%9F%E6%90%9C%E7%B4%A2%E6%96%87%E4%BB%B6.html" />
+<meta property="og:url" content="http://hhwyz.com/2022/04/27/%E5%BF%AB%E9%80%9F%E6%90%9C%E7%B4%A2%E6%96%87%E4%BB%B6.html" />
+<meta property="og:site_name" content="W开发笔记" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-04-27T14:36:00+08:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="快速搜索文件" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"牛哥"},"dateModified":"2022-04-27T14:36:00+08:00","datePublished":"2022-04-27T14:36:00+08:00","description":"macOS上的搜索功能不太好用，搜的太慢。","headline":"快速搜索文件","mainEntityOfPage":{"@type":"WebPage","@id":"http://hhwyz.com/2022/04/27/%E5%BF%AB%E9%80%9F%E6%90%9C%E7%B4%A2%E6%96%87%E4%BB%B6.html"},"url":"http://hhwyz.com/2022/04/27/%E5%BF%AB%E9%80%9F%E6%90%9C%E7%B4%A2%E6%96%87%E4%BB%B6.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="http://hhwyz.com/feed.xml" title="W开发笔记" /><script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script></head><body><header class="site-header" role="banner">
+
+  
+  <div class="wrapper">
+    <a class="site-title" rel="author" href="/">W开发笔记</a>
+    <!-- <a class="site-title" href="/scarlett">晔哥博客</a> -->
+      <nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+        <div class="trigger">
+            <a class="page-link" href="/tools">Tools</a>
+            <a class="page-link" href="/tags">Tags</a>
+            <a class="page-link" href="/about">About</a>
+        </div>
+      </nav>
+  </div>
+</header>
+<main class="page-content" aria-label="Content">
+    <div class="wrapper">
+      <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">快速搜索文件</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-04-27T14:36:00+08:00" itemprop="datePublished">2022-04-27
+      </time></p>
+  </header>
+
+  <div class="post-topic">
+    <ul id="toc" class="section-nav">
+<li class="toc-entry toc-h2"><a href="#1-crontab编写">1 crontab编写</a></li>
+<li class="toc-entry toc-h2"><a href="#2-语句解释">2 语句解释</a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#21-crontab">2.1 crontab</a></li>
+<li class="toc-entry toc-h3"><a href="#22-find">2.2 find</a></li>
+<li class="toc-entry toc-h3"><a href="#23-xargs-ls-awk">2.3 xargs ls awk</a></li>
+</ul>
+</li>
+</ul>
+  </div>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>macOS上的搜索功能不太好用，搜的太慢。</p>
+
+<p>如果定时每小时把所有文件路径写到一个文件里，就可以搜索的很快了。</p>
+
+<h2 id="1-crontab编写">1 crontab编写</h2>
+
+<p>终端中执行<code class="language-plaintext highlighter-rouge">crontab -e</code>，打开定时任务配置文件，加入下面的指令：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0 <span class="k">*</span> <span class="k">*</span> <span class="k">*</span> <span class="k">*</span> find /Users/xxx 
+<span class="nt">-path</span> <span class="s1">'/Users/xxx/Library/Metadata'</span> <span class="nt">-prune</span> <span class="nt">-o</span> 
+<span class="nt">-path</span> <span class="s1">'/Users/xxx/Library/Application Support/Google/Chrome'</span> <span class="nt">-prune</span> <span class="nt">-o</span> 
+<span class="nt">-path</span> <span class="s1">'/Users/xxx/Library/Caches'</span> <span class="nt">-prune</span> <span class="nt">-o</span> 
+<span class="nt">-type</span> f <span class="nt">-a</span> 
+<span class="nt">-print0</span> | 
+xargs <span class="nt">-0</span> <span class="nb">ls</span> <span class="nt">-lh</span> | 
+<span class="nb">awk</span> <span class="s1">'{print $5,"@",substr($0,index($0,$9))}'</span> 
+<span class="o">&gt;</span> /Users/xxx/file_and_size.txt
+</code></pre></div></div>
+
+<p>保存退出后，每小时电脑上就会自动生成一个所有文件清单。</p>
+
+<p>使用下面的命令即可模糊搜索：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">cat</span> /Users/xxx/file_and_size.txt | fzf
+</code></pre></div></div>
+
+<p>搜索结果就像这样：</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  14M @ /Users/xxx/Downloads/1-1.pdf
+  24B @ /Users/xxx/Downloads/old/pdf
+  0B @ /Users/xxx/Documents/here/pdf
+  127K @ /Users/xxx/Downloads/3.pdf
+  2.1M @ /Users/xxx/Downloads/4.pdf
+  127K @ /Users/xxx/Downloads/1.pdf
+&gt; 19M @ /Users/xxx/Downloads/2.pdf
+  1033/1982431
+&gt; pdf$
+</code></pre></div></div>
+
+<h2 id="2-语句解释">2 语句解释</h2>
+
+<h3 id="21-crontab">2.1 crontab</h3>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0 * * * *
+</code></pre></div></div>
+<p>在mac上，第一个0代表的是分钟，因此上述定时是每小时的第0分钟执行。</p>
+
+<h3 id="22-find">2.2 find</h3>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>find /Users/xxx <span class="c"># find后面的第一个参数，代表从哪里作为root开始搜索</span>
+<span class="c"># 后面跟的每一行，都是一个逻辑表达式</span>
+<span class="nt">-path</span> <span class="s1">'/Users/xxx/Library/Metadata'</span> <span class="nt">-prune</span> <span class="c"># 如果路径匹配/Users/xxx/Library/Metadata，不再递归进入这个目录遍历文件，并且返回true，这是-prune的作用</span>
+<span class="nt">-o</span> <span class="c"># -o的含义是or，因此如果上面的表达式返回true，就不再执行后面的逻辑了，因此跳过了上面的目录。后面依此类推</span>
+<span class="nt">-path</span> <span class="s1">'/Users/xxx/Library/Application Support/Google/Chrome'</span> <span class="nt">-prune</span>
+<span class="nt">-o</span>
+<span class="nt">-path</span> <span class="s1">'/Users/xxx/Library/Caches'</span> <span class="nt">-prune</span>
+<span class="nt">-o</span>
+<span class="nt">-type</span> f <span class="c"># 只匹配文件，不匹配目录</span>
+<span class="nt">-a</span> <span class="c"># -a的含义是and</span>
+<span class="nt">-print0</span> <span class="c"># 这是一个action，输出匹配的文件路径，文件直接用\0分隔</span>
+</code></pre></div></div>
+<p>综上，上述<code class="language-plaintext highlighter-rouge">find</code>指令的含义是：从<code class="language-plaintext highlighter-rouge">/Users/xxx</code>作为root开始搜索，跳过<code class="language-plaintext highlighter-rouge">/Users/xxx/Library/Metadata</code>、<code class="language-plaintext highlighter-rouge">/Users/xxx/Library/Application Support/Google/Chrome</code>、<code class="language-plaintext highlighter-rouge">/Users/xxx/Library/Caches</code>三个目录，找出所有文件，打印出来，文件之间用<code class="language-plaintext highlighter-rouge">\0</code>分隔。</p>
+<h3 id="23-xargs-ls-awk">2.3 xargs ls awk</h3>
+
+<p>find指令输出的文件，可以使用<code class="language-plaintext highlighter-rouge">ls -lh</code>获取到详细信息，比如：</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>~ <span class="nb">ls</span> <span class="nt">-lh</span> /Users/xxx/file_and_size.txt
+<span class="nt">-rw-r--r--</span>  1 xxx  staff   364M  4 27 14:05 /Users/xxx/file_and_size.txt
+</code></pre></div></div>
+<p>在macOS上，文件大小是用空格分隔的第5列，路径是第9列，因此使用</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>'{print $5,"@",substr($0,index($0,$9))}'
+</code></pre></div></div>
+<p>的awk语句可以把文件路径和文件大小打印出来，就像这样：</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>~ <span class="nb">ls</span> <span class="nt">-lh</span> /Users/xxx/file_and_size.txt | <span class="nb">awk</span> <span class="s1">'{print $5,"@",substr($0,index($0,$9))}'</span>
+346M @ /Users/xxx/file_and_size.txt
+</code></pre></div></div>
+<p>使用<code class="language-plaintext highlighter-rouge">substr($0,index($0,$9))</code>，而不是直接使用$9，是因为有的路径里面含有空格，不能直接用空格split。</p>
+
+<p><code class="language-plaintext highlighter-rouge">xargs -0</code>可以读取管道前面用\0分隔的输出，并且作为后面ls命令的参数。</p>
+
+<p>综上，如下语句</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>xargs -0 ls -lh | awk '{print $5,"@",substr($0,index($0,$9))}'
+</code></pre></div></div>
+<p>读取了<code class="language-plaintext highlighter-rouge">find</code>过滤出来的文件列表，用<code class="language-plaintext highlighter-rouge">ls</code>指令获得了文件大小，并用<code class="language-plaintext highlighter-rouge">awk</code>打印出来。</p>
+
+  </div><a class="u-url" href="/2022/04/27/%E5%BF%AB%E9%80%9F%E6%90%9C%E7%B4%A2%E6%96%87%E4%BB%B6.html" hidden></a>
+</article>
+
+    </div>
+  </main><footer class="site-footer h-card">
+  <data class="u-url" href="/%20/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">W开发笔记</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="social-media-list"><li><a
+              href="https://github.com/aihy"><svg class="svg-icon">
+                <use xlink:href="/assets/minima-social-icons.svg#github"></use>
+              </svg> <span class="username">aihy</span></a></li><li><a href="https://weibo.com/u/2058723354"><img src="https://www.weibo.com/favicon.ico"
+                class="svg-icon"></img><span>豪哥1234567890</span></a></li>
+          <li><a href="mailto:verses.splices-0o@icloud.com"><img src="/assets/mail.png"
+                class="svg-icon"><span>verses.splices-0o@icloud.com</span></a></li>
+        </ul>
+
+      </div>
+      <div class="footer-col footer-col-1">
+        <ul class="social-media-list">
+          <li><a href="https://beian.miit.gov.cn">京ICP备2021018247号</a></li>
+          <li>
+            <div style="width:300px;margin:0 auto; padding:20px 0;">
+              <a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=11010802041372"
+                style="display:inline-block;text-decoration:none;height:20px;line-height:20px;"><img src=""
+                  style="float:left;" />
+                <p style="float:left;height:20px;line-height:20px;margin: 0px 0px 0px 5px; color:#939393;"><img
+                    src="/assets/beian.png"> 京公网安备
+                  11010802041372号</p>
+              </a>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+
+      <div class="footer-col footer-col-1">
+        <ul class="social-media-list">
+          <li>
+            <script
+              type="text/javascript">document.write(unescape("%3Cspan id='cnzz_stat_icon_1279958261'%3E%3C/span%3E%3Cscript src='https://v1.cnzz.com/z_stat.php%3Fid%3D1279958261%26online%3D2' type='text/javascript'%3E%3C/script%3E"));</script>
+          </li>
+        </ul>
+      </div>
+
+
+
+
+    </div>
+
+  </div></footer></body>
+
+</html>

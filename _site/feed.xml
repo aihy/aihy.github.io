@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.2">Jekyll</generator><link href="http://hhwyz.com/feed.xml" rel="self" type="application/atom+xml" /><link href="http://hhwyz.com/" rel="alternate" type="text/html" /><updated>2023-03-27T20:26:41+08:00</updated><id>http://hhwyz.com/feed.xml</id><title type="html">W开发笔记</title><subtitle></subtitle><author><name>牛哥</name></author><entry><title type="html">快速搜索文件</title><link href="http://hhwyz.com/2022/04/27/%E5%BF%AB%E9%80%9F%E6%90%9C%E7%B4%A2%E6%96%87%E4%BB%B6.html" rel="alternate" type="text/html" title="快速搜索文件" /><published>2022-04-27T14:36:00+08:00</published><updated>2022-04-27T14:36:00+08:00</updated><id>http://hhwyz.com/2022/04/27/%E5%BF%AB%E9%80%9F%E6%90%9C%E7%B4%A2%E6%96%87%E4%BB%B6</id><content type="html" xml:base="http://hhwyz.com/2022/04/27/%E5%BF%AB%E9%80%9F%E6%90%9C%E7%B4%A2%E6%96%87%E4%BB%B6.html"><![CDATA[<p>macOS上的搜索功能不太好用，搜的太慢。</p>
+
+<p>如果定时每小时把所有文件路径写到一个文件里，就可以搜索的很快了。</p>
+
+<h2 id="1-crontab编写">1 crontab编写</h2>
+
+<p>终端中执行<code class="language-plaintext highlighter-rouge">crontab -e</code>，打开定时任务配置文件，加入下面的指令：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0 <span class="k">*</span> <span class="k">*</span> <span class="k">*</span> <span class="k">*</span> find /Users/xxx 
+<span class="nt">-path</span> <span class="s1">'/Users/xxx/Library/Metadata'</span> <span class="nt">-prune</span> <span class="nt">-o</span> 
+<span class="nt">-path</span> <span class="s1">'/Users/xxx/Library/Application Support/Google/Chrome'</span> <span class="nt">-prune</span> <span class="nt">-o</span> 
+<span class="nt">-path</span> <span class="s1">'/Users/xxx/Library/Caches'</span> <span class="nt">-prune</span> <span class="nt">-o</span> 
+<span class="nt">-type</span> f <span class="nt">-a</span> 
+<span class="nt">-print0</span> | 
+xargs <span class="nt">-0</span> <span class="nb">ls</span> <span class="nt">-lh</span> | 
+<span class="nb">awk</span> <span class="s1">'{print $5,"@",substr($0,index($0,$9))}'</span> 
+<span class="o">&gt;</span> /Users/xxx/file_and_size.txt
+</code></pre></div></div>
+
+<p>保存退出后，每小时电脑上就会自动生成一个所有文件清单。</p>
+
+<p>使用下面的命令即可模糊搜索：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">cat</span> /Users/xxx/file_and_size.txt | fzf
+</code></pre></div></div>
+
+<p>搜索结果就像这样：</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  14M @ /Users/xxx/Downloads/1-1.pdf
+  24B @ /Users/xxx/Downloads/old/pdf
+  0B @ /Users/xxx/Documents/here/pdf
+  127K @ /Users/xxx/Downloads/3.pdf
+  2.1M @ /Users/xxx/Downloads/4.pdf
+  127K @ /Users/xxx/Downloads/1.pdf
+&gt; 19M @ /Users/xxx/Downloads/2.pdf
+  1033/1982431
+&gt; pdf$
+</code></pre></div></div>
+
+<h2 id="2-语句解释">2 语句解释</h2>
+
+<h3 id="21-crontab">2.1 crontab</h3>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0 * * * *
+</code></pre></div></div>
+<p>在mac上，第一个0代表的是分钟，因此上述定时是每小时的第0分钟执行。</p>
+
+<h3 id="22-find">2.2 find</h3>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>find /Users/xxx <span class="c"># find后面的第一个参数，代表从哪里作为root开始搜索</span>
+<span class="c"># 后面跟的每一行，都是一个逻辑表达式</span>
+<span class="nt">-path</span> <span class="s1">'/Users/xxx/Library/Metadata'</span> <span class="nt">-prune</span> <span class="c"># 如果路径匹配/Users/xxx/Library/Metadata，不再递归进入这个目录遍历文件，并且返回true，这是-prune的作用</span>
+<span class="nt">-o</span> <span class="c"># -o的含义是or，因此如果上面的表达式返回true，就不再执行后面的逻辑了，因此跳过了上面的目录。后面依此类推</span>
+<span class="nt">-path</span> <span class="s1">'/Users/xxx/Library/Application Support/Google/Chrome'</span> <span class="nt">-prune</span>
+<span class="nt">-o</span>
+<span class="nt">-path</span> <span class="s1">'/Users/xxx/Library/Caches'</span> <span class="nt">-prune</span>
+<span class="nt">-o</span>
+<span class="nt">-type</span> f <span class="c"># 只匹配文件，不匹配目录</span>
+<span class="nt">-a</span> <span class="c"># -a的含义是and</span>
+<span class="nt">-print0</span> <span class="c"># 这是一个action，输出匹配的文件路径，文件直接用\0分隔</span>
+</code></pre></div></div>
+<p>综上，上述<code class="language-plaintext highlighter-rouge">find</code>指令的含义是：从<code class="language-plaintext highlighter-rouge">/Users/xxx</code>作为root开始搜索，跳过<code class="language-plaintext highlighter-rouge">/Users/xxx/Library/Metadata</code>、<code class="language-plaintext highlighter-rouge">/Users/xxx/Library/Application Support/Google/Chrome</code>、<code class="language-plaintext highlighter-rouge">/Users/xxx/Library/Caches</code>三个目录，找出所有文件，打印出来，文件之间用<code class="language-plaintext highlighter-rouge">\0</code>分隔。</p>
+<h3 id="23-xargs-ls-awk">2.3 xargs ls awk</h3>
+
+<p>find指令输出的文件，可以使用<code class="language-plaintext highlighter-rouge">ls -lh</code>获取到详细信息，比如：</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>~ <span class="nb">ls</span> <span class="nt">-lh</span> /Users/xxx/file_and_size.txt
+<span class="nt">-rw-r--r--</span>  1 xxx  staff   364M  4 27 14:05 /Users/xxx/file_and_size.txt
+</code></pre></div></div>
+<p>在macOS上，文件大小是用空格分隔的第5列，路径是第9列，因此使用</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>'{print $5,"@",substr($0,index($0,$9))}'
+</code></pre></div></div>
+<p>的awk语句可以把文件路径和文件大小打印出来，就像这样：</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>~ <span class="nb">ls</span> <span class="nt">-lh</span> /Users/xxx/file_and_size.txt | <span class="nb">awk</span> <span class="s1">'{print $5,"@",substr($0,index($0,$9))}'</span>
+346M @ /Users/xxx/file_and_size.txt
+</code></pre></div></div>
+<p>使用<code class="language-plaintext highlighter-rouge">substr($0,index($0,$9))</code>，而不是直接使用$9，是因为有的路径里面含有空格，不能直接用空格split。</p>
+
+<p><code class="language-plaintext highlighter-rouge">xargs -0</code>可以读取管道前面用\0分隔的输出，并且作为后面ls命令的参数。</p>
+
+<p>综上，如下语句</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>xargs -0 ls -lh | awk '{print $5,"@",substr($0,index($0,$9))}'
+</code></pre></div></div>
+<p>读取了<code class="language-plaintext highlighter-rouge">find</code>过滤出来的文件列表，用<code class="language-plaintext highlighter-rouge">ls</code>指令获得了文件大小，并用<code class="language-plaintext highlighter-rouge">awk</code>打印出来。</p>]]></content><author><name>牛哥</name></author><category term="linux" /><summary type="html"><![CDATA[macOS上的搜索功能不太好用，搜的太慢。]]></summary></entry><entry><title type="html">List排序</title><link href="http://hhwyz.com/2021/05/27/List%E6%8E%92%E5%BA%8F.html" rel="alternate" type="text/html" title="List排序" /><published>2021-05-27T18:00:00+08:00</published><updated>2021-05-27T18:00:00+08:00</updated><id>http://hhwyz.com/2021/05/27/List%E6%8E%92%E5%BA%8F</id><content type="html" xml:base="http://hhwyz.com/2021/05/27/List%E6%8E%92%E5%BA%8F.html"><![CDATA[<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">java.util.List</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">java.util.stream.Collectors</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">java.util.stream.Stream</span><span class="o">;</span>
+
+<span class="cm">/**
+ * @author erniu.wzh
+ * @date 2021/5/27 16:57
+ */</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Test</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="nc">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+        <span class="nc">List</span><span class="o">&lt;</span><span class="nc">NumberDTO</span><span class="o">&gt;</span> <span class="n">numberDTOList</span> <span class="o">=</span> <span class="nc">Stream</span><span class="o">.</span><span class="na">of</span><span class="o">(</span>
+                <span class="k">new</span> <span class="nf">NumberDTO</span><span class="o">(</span><span class="s">"tomy1"</span><span class="o">,</span> <span class="mi">1</span><span class="o">),</span>
+                <span class="k">new</span> <span class="nf">NumberDTO</span><span class="o">(</span><span class="s">"tomy2"</span><span class="o">,</span> <span class="mi">2</span><span class="o">),</span>
+                <span class="k">new</span> <span class="nf">NumberDTO</span><span class="o">(</span><span class="s">"tomy3"</span><span class="o">,</span> <span class="mi">3</span><span class="o">),</span>
+                <span class="k">new</span> <span class="nf">NumberDTO</span><span class="o">(</span><span class="s">"tomy4"</span><span class="o">,</span> <span class="mi">4</span><span class="o">))</span>
+                <span class="o">.</span><span class="na">collect</span><span class="o">(</span><span class="nc">Collectors</span><span class="o">.</span><span class="na">toList</span><span class="o">());</span>
+        <span class="n">numberDTOList</span><span class="o">.</span><span class="na">sort</span><span class="o">((</span><span class="n">h1</span><span class="o">,</span> <span class="n">h2</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="n">h2</span><span class="o">.</span><span class="na">getNum</span><span class="o">().</span><span class="na">compareTo</span><span class="o">(</span><span class="n">h1</span><span class="o">.</span><span class="na">getNum</span><span class="o">()));</span>
+        <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">numberDTOList</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>output</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>NumberDTO<span class="o">(</span><span class="nv">name</span><span class="o">=</span>tomy4, <span class="nv">num</span><span class="o">=</span>4<span class="o">)</span>, NumberDTO<span class="o">(</span><span class="nv">name</span><span class="o">=</span>tomy3, <span class="nv">num</span><span class="o">=</span>3<span class="o">)</span>, NumberDTO<span class="o">(</span><span class="nv">name</span><span class="o">=</span>tomy2, <span class="nv">num</span><span class="o">=</span>2<span class="o">)</span>, NumberDTO<span class="o">(</span><span class="nv">name</span><span class="o">=</span>tomy1, <span class="nv">num</span><span class="o">=</span>1<span class="o">)]</span>
+</code></pre></div></div>]]></content><author><name>牛哥</name></author><category term="javacode" /><category term="java" /><summary type="html"><![CDATA[```java import java.util.List; import java.util.stream.Collectors; import java.util.stream.Stream;]]></summary></entry><entry><title type="html">使用Jib构建Java镜像</title><link href="http://hhwyz.com/2021/05/27/%E4%BD%BF%E7%94%A8Jib%E6%9E%84%E5%BB%BAJava%E9%95%9C%E5%83%8F.html" rel="alternate" type="text/html" title="使用Jib构建Java镜像" /><published>2021-05-27T18:00:00+08:00</published><updated>2021-05-27T18:00:00+08:00</updated><id>http://hhwyz.com/2021/05/27/%E4%BD%BF%E7%94%A8Jib%E6%9E%84%E5%BB%BAJava%E9%95%9C%E5%83%8F</id><content type="html" xml:base="http://hhwyz.com/2021/05/27/%E4%BD%BF%E7%94%A8Jib%E6%9E%84%E5%BB%BAJava%E9%95%9C%E5%83%8F.html"><![CDATA[<p><a href="https://cloud.google.com/java/getting-started/jib?hl=zh-cn">官方指南</a></p>
+
+<p>只需在主 pom 里添加插件</p>
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;plugin&gt;</span>
+    <span class="nt">&lt;groupId&gt;</span>com.google.cloud.tools<span class="nt">&lt;/groupId&gt;</span>
+    <span class="nt">&lt;artifactId&gt;</span>jib-maven-plugin<span class="nt">&lt;/artifactId&gt;</span>
+    <span class="nt">&lt;version&gt;</span>3.0.0<span class="nt">&lt;/version&gt;</span>
+    <span class="nt">&lt;configuration&gt;</span>
+        <span class="nt">&lt;to&gt;</span>
+            <span class="nt">&lt;image&gt;</span>myimage<span class="nt">&lt;/image&gt;</span>
+        <span class="nt">&lt;/to&gt;</span>
+    <span class="nt">&lt;/configuration&gt;</span>
+<span class="nt">&lt;/plugin&gt;</span>
+</code></pre></div></div>
+
+<p>然后在终端执行<code class="language-plaintext highlighter-rouge">mvn compile jib:dockerBuild</code></p>
+
+<p>镜像就直接构建到 docker images 里了</p>
+
+<p>直接执行<code class="language-plaintext highlighter-rouge">docker run -p 80:8080 myimage</code></p>]]></content><author><name>牛哥</name></author><summary type="html"><![CDATA[官方指南]]></summary></entry><entry><title type="html">Map to List</title><link href="http://hhwyz.com/2021/05/27/Map-to-List.html" rel="alternate" type="text/html" title="Map to List" /><published>2021-05-27T16:00:00+08:00</published><updated>2021-05-27T16:00:00+08:00</updated><id>http://hhwyz.com/2021/05/27/Map-to-List</id><content type="html" xml:base="http://hhwyz.com/2021/05/27/Map-to-List.html"><![CDATA[<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">java.util.ArrayList</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">java.util.HashMap</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">java.util.List</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">java.util.Map</span><span class="o">;</span>
+
+<span class="cm">/**
+ * @author erniu.wzh
+ * @date 2021/5/27 16:57
+ */</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Test</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="nc">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+        <span class="nc">Map</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span> <span class="nc">String</span><span class="o">&gt;</span> <span class="n">myMap</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">HashMap</span><span class="o">();</span>
+        <span class="n">myMap</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">"1"</span><span class="o">,</span><span class="s">"a"</span><span class="o">);</span>
+        <span class="n">myMap</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">"2"</span><span class="o">,</span><span class="s">"b"</span><span class="o">);</span>
+        <span class="nc">List</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="n">myList</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ArrayList</span><span class="o">&lt;&gt;(</span><span class="n">myMap</span><span class="o">.</span><span class="na">values</span><span class="o">());</span>
+        <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">myList</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+</code></pre></div></div>]]></content><author><name>牛哥</name></author><category term="javacode" /><category term="java" /><summary type="html"><![CDATA[```java import java.util.ArrayList; import java.util.HashMap; import java.util.List; import java.util.Map;]]></summary></entry></feed>
