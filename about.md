@@ -4,4 +4,4 @@ title: About
 permalink: /about/
 ---
 
-欢迎访问，W开发笔记！
+欢迎！
